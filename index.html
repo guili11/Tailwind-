@@ -16,9 +16,8 @@
                 @apply transition-all duration-300 hover:scale-105 hover:shadow-lg;
             }
             .pic-box{
-                @apply bg-white rounded-lg overflow-hidden shadow img-hover;
-                width:530px;
-                height:400px;
+                @apply bg-white rounded-lg overflow-hidden shadow img-hover w-full;
+                
             }
             .pic-lazy{
                 @apply w-full object-contain cursor-pointer opacity-0 transition-opacity duration-500;
@@ -30,7 +29,7 @@
                 @apply p-3 text-gray-800 text-center
             }
             .gallery-title{
-                @apply text-3xl text-center text-white fixed w-full bg-red-500 z-10
+                @apply text-3xl text-center text-white fixed w-full bg-red-500 z-10 top-0 py-2;
             }
         }
     </style>
@@ -54,7 +53,7 @@
     <div >
 <!--使用了fixed，脱离了文档流，就不能依靠别人来居中了，只能自身出发-->
         <h2 class="gallery-title">Tailwind 图片画廊</h2>
-        <div class="grid items-center grid-cols-1 p-10 md:grid-cols-2 lg:grid-cols-3 gap-6" id="grid-box">
+        <div class="grid items-center grid-cols-1  md:grid-cols-2 lg:grid-cols-3 gap-6" id="grid-box">
             <!--        js动态添加进来-->
         </div>
     </div>
