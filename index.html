@@ -196,6 +196,15 @@ gridBox.addEventListener('click', (e) => {
             document.body.removeChild(mask);
         }, 300); // 与过渡时长一致
     });
+    // 适配移动端触摸事件
+    mask.addEventListener('touchstart',()=>{
+        // 关闭动画：先缩小图片，再移除遮罩
+        bigPic.style.transform = 'scale(0.95)';
+        mask.style.opacity = '0';
+        setTimeout(() => {
+            document.body.removeChild(mask);
+        }, 300); // 与过渡时长一致
+    })
 
     // 可选：禁止遮罩层内图片的点击冒泡（避免重复触发）
     bigPic.addEventListener('click', (e) => {
