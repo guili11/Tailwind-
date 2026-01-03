@@ -4,12 +4,21 @@
     <meta charset="UTF-8">
     <title>使用Tailwind</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<!--    快速使用tailwind-->
     <script src="https://cdn.tailwindcss.com"></script>
+    <!-- 引入Lodash（优先放在<head>里，或业务脚本前） -->
+    <script src="https://cdn.jsdelivr.net/npm/lodash@4.17.21/lodash.min.js"></script>
     <script>
         tailwind.config={
 
         }
     </script>
+    <!-- 初始化基本的数据   -->
+    <script type="module" src="base.js" defer></script>
+    <!--懒加载图片-->
+    <script type="module" src="loading.js" defer></script>
+    <!--点击某个图片，这张图片直接放大-->
+    <script type="module" src="event.js" defer></script>
     <!-- 可选：自定义工具类（补充Tailwind默认没有的样式） -->
     <style type="text/tailwindcss">
         @layer utilities {
@@ -17,7 +26,9 @@
                 @apply transition-all duration-300 hover:scale-105 hover:shadow-lg;
             }
             .pic-box{
-                @apply bg-white rounded-lg overflow-hidden shadow img-hover w-full;
+                @apply bg-white rounded-lg overflow-hidden shadow img-hover w-full  flex flex-col;
+                /*解决：问题，我的每个照片box大小都是响应式的，导致了我一进去的瞬间，他们都是在 窗口范围的，然后他们直接全加载了，导致懒加载失效，*/
+                min-height: 42vh;
             }
             .pic-lazy{
                 @apply w-full object-contain cursor-pointer opacity-0 transition-opacity duration-500;
@@ -26,10 +37,12 @@
                 animation: skeleton 1.5s infinite linear;
             }
             .pic-text{
-                @apply p-3 text-gray-800 text-center
+                /*mt-auto  box开启 flex，mt auto直接占满 */
+                @apply p-3 text-gray-800 text-center  mt-auto;
             }
+            /*margin是保证间距大于等于一个数，满足了就不会动了， 这里想要的是贴附效果*/
             .gallery-title{
-                @apply text-3xl text-center text-white fixed w-full bg-red-500 z-10 top-0 py-2;
+                @apply text-3xl text-center text-white fixed w-full bg-red-500 z-10 top-0 h-10 p-2 ;
             }
         }
     </style>
@@ -53,163 +66,12 @@
     <div >
 <!--使用了fixed，脱离了文档流，就不能依靠别人来居中了，只能自身出发-->
         <h2 class="gallery-title">Tailwind 图片画廊</h2>
-        <div class="grid items-center grid-cols-1  md:grid-cols-2 lg:grid-cols-3 gap-6" id="grid-box">
+        <div class="grid items-center grid-cols-1 mt-10  md:grid-cols-2 lg:grid-cols-3 gap-6" id="grid-box">
             <!--        js动态添加进来-->
         </div>
     </div>
 </body>
-<script>
-    const picData={imgUrl:"https://picsum.photos/600/400?random=",text:"画廊示例图"};
-    const picNum=100;
-    const galleryData=[];
-    for(let i=0;i<picNum;i++){
-        const temp={...picData};
-        temp.imgUrl=temp.imgUrl+(i+1);
-        temp.text="画廊示例图"+(i+1);
-        galleryData.push(temp);
-    }
-    const fragment=document.createDocumentFragment();
-    galleryData.forEach(item=>{
-        const div=document.createElement("div");
-        div.classList.add('pic-box');
-        const img=document.createElement("img");
-        img.classList.add('pic-lazy');
-        img.dataset.src=item.imgUrl;
-        img.alt=item.text;
-        const p=document.createElement("p");
-        p.classList.add('pic-text');
-        p.textContent=item.text;
-        // 给每个盒子组装起来
-        div.append(img);
-        div.append(p);
-    //     准备结束，添加到fragment中，
-        fragment.append(div);
-    })
 
-//     一次性添加到html中，减少dom操作，减少回流
-    const gridBox=document.querySelector('#grid-box');
-    gridBox.append(fragment);
 
-</script>
-<!--懒加载图片-->
-<script>
-    const lazyImgs=document.querySelectorAll('.pic-lazy');
-    // 2. 核心判断：图片是否进入可视区域
-    function isInViewport(img){
-        const rect=img.getBoundingClientRect();
-        console.log(rect.bottom);
-        console.log('window innerHeight:',window.innerHeight);
-        //
-        return rect.top<=window.innerHeight+300 && rect.bottom>=0;
-    }
-    // 3. 图片加载函数
-    function loadImage(img){
-        if(img.classList.contains('loaded'))return;
-        const realSrc=img.dataset.src;
-        if(realSrc){
-            img.src=realSrc;
-            img.onload=()=>{
-                img.classList.add('loaded');
-            }
-        }
-    }
-//     自定义节流函数
-    function throttle(fn,delay=200){
-        let timer=null;
-        return ()=>{
-            if(!timer){
-                timer=setTimeout(()=>{
-                    fn();
-                    timer=null;
-                },delay);
-            }
-        }
-    }
 
-//     5.初始化加载
-    function initLoad(){
-        lazyImgs.forEach(img=>{
-            if(isInViewport(img)) {
-                loadImage(img);
-            }
-        })
-    }
-    // 6.监听scroll事件，触发检查函数（带有节流）
-    window.addEventListener('scroll',throttle(initLoad,200));
-    // 首次加载
-    initLoad();
-
-</script>
-
-<!--点击某个图片，这张图片直接放大-->
-<script>
-<!--    事件委托机制嘛-->
-// 这里的js跟上边的是一个作用域，所以这里可以直接使用上边定义的变量
-gridBox;
-
-// 2. 点击事件委托（核心逻辑）
-gridBox.addEventListener('click', (e) => {
-
-    // 第一步：判断点击的是不是图片（避免点到文本/容器触发）
-    const picEl = e.target;
-    if (!picEl.classList.contains('pic-lazy')) return; // 只处理图片元素
-    // 第二步：获取图片真实地址（兼容懒加载：如果是data-src，取data-src；否则取src）
-    const realSrc = picEl.dataset.src || picEl.src;
-
-    // 第三步：创建全屏遮罩层（追加到body）
-    const mask = document.createElement('div');
-    // 遮罩层样式（Tailwind 类，也可写原生CSS）
-    mask.className = 'fixed inset-0 bg-black/80 flex items-center justify-center z-50 cursor-pointer';
-    mask.style.transition = 'opacity 0.3s ease';
-
-    // 第四步：创建放大的图片元素
-    const bigPic = document.createElement('img');
-    bigPic.src = realSrc;
-    // 放大图片样式：最大宽高90%，居中，加过渡动画
-    bigPic.style.cssText = `
-    max-width: 90vw;
-    max-height: 90vh;
-    object-fit: contain;
-    min-width: 70vw;
-    min-height: 70vh;
-
-    transform: scale(0.95);
-    transition: transform 0.3s ease;
-  `;
-
-    // 第五步：组装遮罩层+放大图片，追加到body
-    mask.appendChild(bigPic);
-    document.body.appendChild(mask);
-
-    // 第六步：修复放大动画（先显示遮罩，再放大图片）
-    setTimeout(() => {
-        bigPic.style.transform = 'scale(1)';
-        mask.style.opacity = '1';
-    }, 10);
-
-    // 第七步：点击遮罩层关闭放大（事件委托）
-    mask.addEventListener('click', () => {
-        // 关闭动画：先缩小图片，再移除遮罩
-        bigPic.style.transform = 'scale(0.95)';
-        mask.style.opacity = '0';
-        setTimeout(() => {
-            document.body.removeChild(mask);
-        }, 300); // 与过渡时长一致
-    });
-    // 适配移动端触摸事件
-    mask.addEventListener('touchstart',()=>{
-        // 关闭动画：先缩小图片，再移除遮罩
-        bigPic.style.transform = 'scale(0.95)';
-        mask.style.opacity = '0';
-        setTimeout(() => {
-            document.body.removeChild(mask);
-        }, 300); // 与过渡时长一致
-    })
-
-    // 可选：禁止遮罩层内图片的点击冒泡（避免重复触发）
-    bigPic.addEventListener('click', (e) => {
-        e.stopPropagation();
-    });
-});
-</script>
 </html>
