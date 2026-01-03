@@ -34,7 +34,9 @@ function loadImage(img){
 const throttleFn=_.throttle(initLoad,200,{
     // 第一次事件触发时立即执行
     leading:true,
-
+    // 最后一次事件触发后再执行一次
+    trailing:true,
+//     上边两个是默认值，可以不写
 
 });
 
